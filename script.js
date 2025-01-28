@@ -36,7 +36,7 @@ analyzeButton.addEventListener('click', async () => {
     const response = await fetch('https://www.googleapis.com/auth/cloud-platform', {
       method: 'POST',
       headers: {
-        'Authorization': 'AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ' , // Adicione sua chave aqui
+        'Authorization': AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ , // Adicione sua chave aqui
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
