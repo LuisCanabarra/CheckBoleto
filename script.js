@@ -33,10 +33,10 @@ analyzeButton.addEventListener('click', async () => {
     };
 
     // Substitua 'SUA_CHAVE_DE_API_AQUI' pela chave de API que você obteve no Google Cloud
-    const response = await fetch('https://api.example.com/gemini-analyze', {
+    const response = await fetch('https://www.googleapis.com/auth/cloud-platform', {
       method: 'POST',
       headers: {
-        'Authorization': AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ , // Adicione sua chave aqui
+        'Authorization': 'AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ' , // Adicione sua chave aqui
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
