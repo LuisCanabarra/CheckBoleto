@@ -25,15 +25,18 @@ analyzeButton.addEventListener('click', async () => {
 
   try {
     const base64File = await fileToBase64(file);
+
+    // Aqui está o prompt e o arquivo a serem enviados à API
     const payload = {
       prompt: "Analise se este boleto é legítimo ou falso com base nas informações fornecidas.",
       file: base64File
     };
 
+    // Substitua 'SUA_CHAVE_DE_API_AQUI' pela chave de API que você obteve no Google Cloud
     const response = await fetch('https://api.example.com/gemini-analyze', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer SUA_CHAVE_DE_API_AQUI',
+        'Authorization': 'AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ', // Adicione sua chave aqui
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
