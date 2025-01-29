@@ -4,7 +4,7 @@ const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-const API_KEY = "AIzaSyDQsCC8C2DEABb7..."; // Substitua pela sua chave de API completa
+const API_KEY = "AIzaSyDQsCC8C2DEABb7-doPorIjkGi5vzTU4aQ"; // Substitua pela sua chave de API completa
 
 // Endpoint para analisar boletos
 app.post("/analyze-boleto", async (req, res) => {
