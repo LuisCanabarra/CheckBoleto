@@ -6,8 +6,5 @@
   },
   "dependencies": {
     "openai": "latest"
-  },
-  "scripts": {
-    "start": "node index.js"
   }
 }
