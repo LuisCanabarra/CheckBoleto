@@ -1,11 +1,6 @@
 {
   "version": 2,
-  "functions": {
-    "api/check-boleto.js": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
-  "routes": [
-    { "src": "/api/check-boleto", "dest": "/api/check-boleto.js" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
   ]
 }
