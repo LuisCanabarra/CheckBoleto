@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/check-boleto.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
