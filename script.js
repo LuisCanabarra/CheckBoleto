@@ -12,7 +12,7 @@ async function analyzeBoleto() {
     
     reader.onload = async function(event) {
         const fileContent = event.target.result; // Aqui pegamos o conteúdo do arquivo
-        const url = "https://meuprojeto.vercel.app/api/analyze"; // 🔴 Substitua pela URL do seu backend
+        const url = "https://check-boleto-luis-canabarras-projects.vercel.app/api/analyze"; // 🔴 Substitua pela URL do seu backend
 
         try {
             const response = await fetch(url, {
