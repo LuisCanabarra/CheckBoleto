@@ -13,12 +13,19 @@ export default async function handler(req, res) {
         const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
         // Criar prompt
-        const prompt = `Analise este boleto: ${boletoData}. 
-        Forneça detalhes sobre: 
-        - Validade do boleto
-        - Valor 
-        - Data de vencimento`;
+        const prompt = `Você é um especialista em análise de boletos bancários.
+Analise este boleto: ${boletoData}.
 
+Por favor forneça:
+1. Valor do boleto
+2. Data de vencimento
+3. Nome do beneficiário
+4. Banco emissor
+5. Se o boleto é válido ou possui alguma irregularidade
+6. Linha digitável
+7. Código de barras
+
+Organize a resposta em tópicos claros e objetivos.`;
         // Gerar resposta
         const result = await model.generateContent(prompt);
         const response = await result.response;
