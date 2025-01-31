@@ -1,7 +1,14 @@
 {
+  "version": 2,
   "functions": {
     "api/check-boleto.js": {
       "runtime": "nodejs18.x"
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/check-boleto",
+      "dest": "api/check-boleto.js"
+    }
+  ]
 }
