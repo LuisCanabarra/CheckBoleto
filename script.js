@@ -8,19 +8,37 @@ async function analyzeBoleto() {
     }
     
     const file = fileInput.files[0];
-    const reader = new FileReader();
     
-    reader.onload = async function(event) {
+    // Verifica se é texto ou imagem
+    if (file.type.startsWith('text')) {
+        // Para arquivos de texto
+        const reader = new FileReader();
+        reader.onload = handleFileContent;
+        reader.readAsText(file);
+    } else if (file.type.startsWith('image')) {
+        // Para imagens
+        const reader = new FileReader();
+        reader.onload = handleFileContent;
+        reader.readAsDataURL(file);
+    } else {
+        alert("Tipo de arquivo não suportado!");
+        return;
+    }
+    
+    async function handleFileContent(event) {
         const fileContent = event.target.result;
-        const url = "/api/check-boleto"; // Rota relativa para API
+        const url = "/api/check-boleto";
         
         try {
-            responseDiv.innerHTML = "<p>Analisando boleto...</p>";
+            responseDiv.innerHTML = "<p>Analisando...</p>";
             
             const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ boletoData: fileContent })
+                body: JSON.stringify({ 
+                    boletoData: fileContent,
+                    fileType: file.type
+                })
             });
             
             if (!response.ok) {
@@ -31,9 +49,7 @@ async function analyzeBoleto() {
             responseDiv.innerHTML = `<p>Análise: ${result.analise}</p>`;
         } catch (error) {
             console.error("Erro:", error);
-            responseDiv.innerHTML = `<p>Erro ao analisar boleto: ${error.message}</p>`;
+            responseDiv.innerHTML = `<p>Erro ao analisar: ${error.message}</p>`;
         }
-    };
-    
-    reader.readAsText(file);
+    }
 }
