@@ -12,14 +12,14 @@ async function analyzeBoleto() {
     
     reader.onload = async function(event) {
         const fileContent = event.target.result;
-        const url = "/api/check-boleto"; // Rota da API no Vercel
+        const url = "/api/check-boleto"; // Rota relativa para API
         
         try {
+            responseDiv.innerHTML = "<p>Analisando boleto...</p>";
+            
             const response = await fetch(url, {
                 method: "POST",
-                headers: { 
-                    "Content-Type": "application/json" 
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ boletoData: fileContent })
             });
             
@@ -28,10 +28,10 @@ async function analyzeBoleto() {
             }
             
             const result = await response.json();
-            responseDiv.innerHTML = `<p>Resposta: ${JSON.stringify(result)}</p>`;
+            responseDiv.innerHTML = `<p>Análise: ${result.analise}</p>`;
         } catch (error) {
-            console.error("Erro detalhado:", error);
-            responseDiv.innerHTML = `<p>Erro ao verificar boleto: ${error.message}</p>`;
+            console.error("Erro:", error);
+            responseDiv.innerHTML = `<p>Erro ao analisar boleto: ${error.message}</p>`;
         }
     };
     
