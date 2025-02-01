@@ -1,8 +1,15 @@
-// api/check-boleto.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 2000; // 2 segundos entre requisições
+const MIN_REQUEST_INTERVAL = 3000; // 3 segundos entre requisições
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash", // Alteração aqui para o modelo experimental
+    generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 1024
+    }
+});
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -13,30 +20,23 @@ export default async function handler(req, res) {
         // Controle de taxa de requisições
         const now = Date.now();
         const timeSinceLastRequest = now - lastRequestTime;
-        
+
         if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-            await new Promise(resolve => 
+            await new Promise(resolve =>
                 setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
             );
         }
-        
+
         lastRequestTime = Date.now();
 
-        const { boletoData } = req.body;
-
-        if (!boletoData) {
-            return res.status(400).json({ error: 'Dados não recebidos' });
+         const formData = await req.formData()
+          const file = formData.get('boleto')
+        if (!file) {
+          return res.status(400).json({ error: 'Dados não recebidos' });
         }
 
-        // Criar nova instância da API para cada requisição
-        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-pro",
-            generationConfig: {
-                temperature: 0.1,
-                maxOutputTokens: 1024,
-            }
-        });
+        const buffer = await file.arrayBuffer();
+        const text = Buffer.from(buffer).toString('utf-8');
 
         const prompt = `Analise este documento e forneça as informações no seguinte formato:
 
@@ -50,11 +50,14 @@ export default async function handler(req, res) {
         [Nome]
 
         VALIDAÇÃO:
-        [Status de validação]`;
+        [Status de validação]
+
+         Dados: ${text}
+      `;
 
         const result = await Promise.race([
-            model.generateContent(prompt + "\n\nDados:\n" + boletoData),
-            new Promise((_, reject) => 
+            model.generateContent(prompt),
+            new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout')), 15000)
             )
         ]);
@@ -62,14 +65,14 @@ export default async function handler(req, res) {
         const response = await result.response;
         const texto = response.text();
 
-        res.status(200).json({ 
+        res.status(200).json({
             analise: texto,
-            timestamp: Date.now() 
+            timestamp: Date.now()
         });
 
     } catch (error) {
         console.error('Erro:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erro ao processar documento',
             message: error.message
         });
