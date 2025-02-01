@@ -1,3 +1,4 @@
+// script.js
 async function analyzeBoleto() {
     const fileInput = document.getElementById("fileInput");
     const responseDiv = document.getElementById("response");
@@ -11,42 +12,27 @@ async function analyzeBoleto() {
     const reader = new FileReader();
     
     reader.onload = async function(event) {
-        const fileContent = event.target.result;
-        let retryCount = 0;
-        const maxRetries = 3;
+        responseDiv.innerHTML = "<p>Processando...</p>";
         
-        async function tryAnalysis() {
-            try {
-                responseDiv.innerHTML = "<p>Analisando documento...</p>";
-                
-                const response = await fetch("/api/check-boleto", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ boletoData: fileContent })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Erro: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                responseDiv.innerHTML = `<pre style="white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px;">${result.analise}</pre>`;
-                
-            } catch (error) {
-                console.error("Erro:", error);
-                retryCount++;
-                
-                if (retryCount < maxRetries) {
-                    responseDiv.innerHTML = `<p>Tentando novamente... (${retryCount}/${maxRetries})</p>`;
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await tryAnalysis();
-                } else {
-                    responseDiv.innerHTML = `<p style="color: red;">Erro ao analisar. Por favor, aguarde alguns segundos e tente novamente.</p>`;
-                }
+        try {
+            const response = await fetch("/api/check-boleto", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    boletoData: event.target.result 
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Falha na requisição');
             }
+            
+            const data = await response.json();
+            responseDiv.innerHTML = `<pre>${data.analise}</pre>`;
+            
+        } catch (error) {
+            responseDiv.innerHTML = "<p>Erro na análise. Tente novamente.</p>";
         }
-        
-        await tryAnalysis();
     };
     
     reader.readAsText(file);
