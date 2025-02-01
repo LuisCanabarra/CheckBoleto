@@ -6,32 +6,43 @@ export default async function handler(req, res) {
             return res.status(405).json({ error: 'Método não permitido' });
         }
 
-        const { boletoData, fileType } = req.body;
+        const { boletoData, fileType, fileName } = req.body;
 
-        // Inicializar Gemini API
         const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+
+        const prompt = `Atue como um especialista em análise de documentos bancários.
         
-        // Escolher o modelo baseado no tipo de arquivo
-        const model = fileType.startsWith('image') 
-            ? genAI.getGenerativeModel({ model: "gemini-pro-vision" })
-            : genAI.getGenerativeModel({ model: "gemini-pro" });
+        Analise este documento e forneça as informações no seguinte formato:
+        
+        VALOR:
+        [Valor do boleto em reais]
+        
+        VENCIMENTO:
+        [Data de vencimento]
+        
+        BENEFICIÁRIO:
+        [Nome do beneficiário]
+        
+        BANCO:
+        [Nome do banco emissor]
+        
+        LINHA DIGITÁVEL:
+        [Linha digitável completa]
+        
+        CÓDIGO DE BARRAS:
+        [Código de barras se visível]
+        
+        VALIDAÇÃO:
+        [Indique se o documento parece válido ou se há indícios de irregularidades]
+        
+        OBSERVAÇÕES:
+        [Quaisquer observações importantes sobre o documento]
+        
+        Por favor, mantenha exatamente este formato na resposta, substituindo os textos entre colchetes pelas informações encontradas.`;
 
-        // Criar prompt
-        const prompt = `Você é um especialista em análise de boletos bancários.
-        Analise este boleto e forneça:
-        1. Valor do boleto
-        2. Data de vencimento
-        3. Nome do beneficiário
-        4. Banco emissor
-        5. Se o boleto é válido ou possui alguma irregularidade
-        6. Linha digitável
-        7. Código de barras
-
-        Organize a resposta em tópicos listados um em baixo do outro claros e objetivos.`;
-
-        // Gerar conteúdo baseado no tipo de arquivo
         let result;
-        if (fileType.startsWith('image')) {
+        try {
             const imageParts = [
                 {
                     inlineData: {
@@ -40,9 +51,9 @@ export default async function handler(req, res) {
                     }
                 }
             ];
-            result = await model.generateContent([prompt, imageParts]);
-        } else {
-            result = await model.generateContent([`${prompt}\n\nConteúdo do boleto: ${boletoData}`]);
+            result = await model.generateContent([prompt, ...imageParts]);
+        } catch (error) {
+            throw new Error(`Erro ao processar arquivo: ${error.message}`);
         }
 
         const response = await result.response;
@@ -57,7 +68,7 @@ export default async function handler(req, res) {
         console.error('Erro detalhado:', error);
         res.status(500).json({ 
             status: 'error', 
-            message: error.message,
+            message: `Erro ao analisar documento: ${error.message}`,
             detalhes: error.toString()
         });
     }
