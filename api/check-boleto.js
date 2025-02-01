@@ -17,43 +17,43 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Controle de taxa de requisições
+         // Controle de taxa de requisições
         const now = Date.now();
         const timeSinceLastRequest = now - lastRequestTime;
-
+        
         if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-            await new Promise(resolve =>
+            await new Promise(resolve => 
                 setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
             );
         }
-
+        
         lastRequestTime = Date.now();
-
          const formData = await req.formData()
           const file = formData.get('boleto')
-        if (!file) {
+         if (!file) {
           return res.status(400).json({ error: 'Dados não recebidos' });
         }
 
         const buffer = await file.arrayBuffer();
         const text = Buffer.from(buffer).toString('utf-8');
 
-        const prompt = `Analise este documento e forneça as informações no seguinte formato:
 
-        VALOR:
-        [Valor em reais]
+          const prompt = `Analise este documento e forneça as informações no seguinte formato:
 
-        VENCIMENTO:
-        [Data]
+          VALOR:
+          [Valor em reais]
 
-        BENEFICIÁRIO:
-        [Nome]
+          VENCIMENTO:
+          [Data]
 
-        VALIDAÇÃO:
-        [Status de validação]
+          BENEFICIÁRIO:
+          [Nome]
 
-         Dados: ${text}
-      `;
+          VALIDAÇÃO:
+          [Status de validação]
+
+           Dados: ${text}
+        `;
 
         const result = await Promise.race([
             model.generateContent(prompt),
