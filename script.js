@@ -1,62 +1,140 @@
-// script.js
-async function analyzeBoleto() {
-    const fileInput = document.getElementById("fileInput");
-    const responseDiv = document.getElementById("response");
-    
-    if (!fileInput.files.length) {
-        alert("Selecione um arquivo!");
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
+
+const boletoInput = document.getElementById('fileInput');
+const analisarButton = document.querySelector('button');
+const resultadoDiv = document.getElementById('response');
+
+analisarButton.addEventListener('click', async () => {
+    const file = boletoInput.files[0];
+    if (!file) {
+        resultadoDiv.innerHTML = "<p style='color: #e74c3c;'>Por favor, selecione um arquivo.</p>";
         return;
     }
-    
-    // Desabilitar input durante processamento
-    fileInput.disabled = true;
-    responseDiv.innerHTML = "<p>Processando documento...</p>";
-    
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = async function(event) {
-        try {
-            // Adiciona delay antes de nova requisição
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const response = await fetch("/api/check-boleto", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    boletoData: event.target.result,
-                    timestamp: Date.now()
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            
-            const data = await response.json();
-            responseDiv.innerHTML = `
-                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-                    <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
-                </div>
-            `;
-            
-        } catch (error) {
-            responseDiv.innerHTML = `
-                <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
-                    <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
-                    <p>Detalhes: ${error.message}</p>
-                </div>
-            `;
-        } finally {
-            // Reabilitar input após processamento
-            fileInput.disabled = false;
+
+    // Desabilitar input e botão durante o processamento
+    boletoInput.disabled = true;
+    analisarButton.disabled = true;
+    resultadoDiv.innerHTML = "<p>Processando documento...</p>";
+
+   try {
+        let text = ""
+        if (file.type === 'application/pdf') {
+           const reader = new FileReader();
+
+            reader.onload = async function (event) {
+             try {
+                 const pdfData = new Uint8Array(event.target.result);
+                 const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                  for (let i = 1; i <= pdf.numPages; i++) {
+                     const page = await pdf.getPage(i);
+                     const content = await page.getTextContent();
+                      text += content.items.map(s => s.str).join(" ");
+                   }
+                 // Adiciona delay antes de nova requisição
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    const formData = new FormData();
+                    formData.append('boleto', new Blob([text],{type:"text/plain"}));
+                
+
+                    const response = await fetch("/api/check-boleto", {
+                      method: "POST",
+                       body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    resultadoDiv.innerHTML = `
+                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                        <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
+                     </div>
+                    `;
+
+
+                 } catch (error) {
+                   console.error('Erro ao processar PDF:', error);
+                    resultadoDiv.innerHTML = `
+                        <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                            <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                            <p>Detalhes: ${error.message}</p>
+                       </div>
+                   `;
+                 } finally {
+                   boletoInput.disabled = false;
+                     analisarButton.disabled = false;
+               }
+
+             };
+              reader.onerror = () => {
+                 responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
+                   boletoInput.disabled = false;
+                   analisarButton.disabled = false;
+              };
+            reader.readAsArrayBuffer(file);
+            } else {
+                  const reader = new FileReader();
+
+                    reader.onload = async function(event) {
+                        try {
+                            const arrayBuffer = event.target.result;
+
+                            const formData = new FormData();
+                            formData.append('boleto', new Blob([arrayBuffer]));
+                            // Adiciona delay antes de nova requisição
+                             await new Promise(resolve => setTimeout(resolve, 2000));
+
+                            const response = await fetch("/api/check-boleto", {
+                                method: "POST",
+                                 body: formData
+                            });
+
+                            if (!response.ok) {
+                                const errorText = await response.text();
+                                throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
+                            }
+
+                            const data = await response.json();
+                             resultadoDiv.innerHTML = `
+                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                                    <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
+                                </div>
+                            `;
+
+
+                        } catch (error) {
+                            resultadoDiv.innerHTML = `
+                                <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                                    <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                                    <p>Detalhes: ${error.message}</p>
+                                </div>
+                            `;
+                        } finally {
+                             // Reabilitar input e botão após o processamento
+                            boletoInput.disabled = false;
+                             analisarButton.disabled = false;
+                        }
+                    };
+                      reader.onerror = () => {
+                      responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
+                        boletoInput.disabled = false;
+                        analisarButton.disabled = false;
+                   };
+                     reader.readAsArrayBuffer(file);
+           }
+        } catch(error){
+            resultadoDiv.innerHTML = `
+                 <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                      <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                      <p>Detalhes: ${error.message}</p>
+                 </div>
+             `;
+             boletoInput.disabled = false;
+              analisarButton.disabled = false;
         }
-    };
-    
-    reader.onerror = () => {
-        responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
-        fileInput.disabled = false;
-    };
-    
-    reader.readAsText(file);
-}
+});
