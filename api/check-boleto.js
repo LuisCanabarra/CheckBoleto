@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Buffer } from 'node:buffer';
 
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 3000; // 3 segundos entre requisições
@@ -16,8 +17,8 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Método não permitido' });
     }
 
-    try {
-         // Controle de taxa de requisições
+   try {
+          // Controle de taxa de requisições
         const now = Date.now();
         const timeSinceLastRequest = now - lastRequestTime;
         
@@ -28,17 +29,25 @@ export default async function handler(req, res) {
         }
         
         lastRequestTime = Date.now();
-         const formData = await req.formData()
-          const file = formData.get('boleto')
-         if (!file) {
-          return res.status(400).json({ error: 'Dados não recebidos' });
+
+        let boletoData;
+         if (req.headers['content-type'] && req.headers['content-type'].includes('application/json')) {
+             boletoData = req.body.boletoData;
+         } else {
+            const chunks = [];
+           for await(const chunk of req) {
+               chunks.push(chunk);
+            }
+           const buffer = Buffer.concat(chunks);
+           const text = buffer.toString('utf-8');
+           boletoData = text;
+         }
+
+        if (!boletoData) {
+             return res.status(400).json({ error: 'Dados não recebidos' });
         }
 
-        const buffer = await file.arrayBuffer();
-        const text = Buffer.from(buffer).toString('utf-8');
-
-
-          const prompt = `Analise este documento e forneça as informações no seguinte formato:
+         const prompt = `Analise este documento e forneça as informações no seguinte formato:
 
           VALOR:
           [Valor em reais]
@@ -52,7 +61,7 @@ export default async function handler(req, res) {
           VALIDAÇÃO:
           [Status de validação]
 
-           Dados: ${text}
+           Dados: ${boletoData}
         `;
 
         const result = await Promise.race([
@@ -61,8 +70,7 @@ export default async function handler(req, res) {
                 setTimeout(() => reject(new Error('Timeout')), 15000)
             )
         ]);
-
-        const response = await result.response;
+         const response = await result.response;
         const texto = response.text();
 
         res.status(200).json({
