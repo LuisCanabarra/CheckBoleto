@@ -1,81 +1,128 @@
-// script.js
-async function analyzeBoleto() {
-    const fileInput = document.getElementById("fileInput");
-    const verifyButton = document.getElementById("verifyButton");
-    const responseDiv = document.getElementById("response");
-    const loadingDiv = document.getElementById("loading");
-    
-    if (!fileInput.files.length) {
-        alert("Por favor, selecione um arquivo.");
-        return;
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const verifyButton = document.getElementById('verifyButton');
+    const loadingDiv = document.getElementById('loading');
+    const responseDiv = document.getElementById('response');
 
-    const file = fileInput.files[0];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    
-    if (file.size > maxSize) {
-        alert("O arquivo é muito grande. Por favor, selecione um arquivo menor que 5MB.");
-        return;
-    }
-    
-    // Validar tipo do arquivo
-    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (!validTypes.includes(file.type)) {
-        alert("Formato de arquivo não suportado. Por favor, use PDF, JPG ou PNG.");
-        return;
-    }
-    
-    try {
-        verifyButton.disabled = true;
-        loadingDiv.style.display = "block";
-        responseDiv.innerHTML = "";
-        
-        // Converter arquivo para base64
-        const base64Data = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
-            reader.readAsDataURL(file);
-        });
-        
-        const response = await fetch("/api/check-boleto", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                fileData: base64Data
-            })
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Erro ao processar o documento');
+
+    fileInput.addEventListener('change', function() {
+        verifyButton.disabled = !fileInput.files.length;
+    });
+
+    window.analyzeBoleto = async function() {
+        const file = fileInput.files[0];
+
+        if (!file) {
+            alert("Por favor, selecione um arquivo!");
+            return;
         }
-        
-        const data = await response.json();
-        responseDiv.innerHTML = `
-            <div class="response-container">
-                <pre class="response-text">${data.analise}</pre>
-            </div>
-        `;
-        
-    } catch (error) {
-        responseDiv.innerHTML = `
-            <div class="error-container">
-                <p>Ocorreu um erro durante a análise:</p>
-                <p>${error.message}</p>
-                <p>Por favor, verifique o arquivo e tente novamente em alguns instantes.</p>
-            </div>
-        `;
-    } finally {
-        verifyButton.disabled = false;
-        loadingDiv.style.display = "none";
-    }
-}
 
-// Adicionar evento para atualizar estado do botão quando um arquivo é selecionado
-document.getElementById("fileInput").addEventListener("change", function() {
-    const verifyButton = document.getElementById("verifyButton");
-    verifyButton.disabled = !this.files.length;
+        loadingDiv.style.display = 'block';
+        responseDiv.innerHTML = ''; // Limpa a resposta anterior
+        
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        reader.onload = async function() {
+           const base64Image = reader.result.split(',')[1];
+            try {
+                const response = await fetch('/api/check-boleto', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fileData: base64Image }),
+                });
+
+                if (!response.ok) {
+                    loadingDiv.style.display = 'none';
+                   const errorData = await response.json()
+                    responseDiv.innerHTML = `<div class="error-container">Erro na requisição: ${errorData.message}</div>`;
+                    return;
+                }
+
+                const data = await response.json();
+              if (data.analise) {
+                    loadingDiv.style.display = 'none';
+                    // Exemplo 1: Exibir toda a análise como JSON stringificado
+                    // responseDiv.innerHTML = `<div class="response-container"><pre>${JSON.stringify(data.analise, null, 2)}</pre></div>`;
+                  
+                     // Exemplo 2: Exibir propriedades específicas
+                      const analise = data.analise.analise_boleto;
+                    let html = '<div class="response-container">';
+                      html += `<h2>Análise do Boleto</h2>`;
+                    
+                        html += `<h3>Identificação do Banco Emissor</h3>`
+                        html += `<p><strong>Logotipo:</strong> ${analise.identificacao_banco.logo || 'Não identificado'}</p>`
+                        html += `<p><strong>Linha Digitável:</strong> ${analise.identificacao_banco.linha_digitavel || 'Não identificado'}</p>`
+                        html += `<p><strong>Três Primeiros Dígitos:</strong> ${analise.identificacao_banco.tres_primeiros_digitos || 'Não identificado'}</p>`
+                        html += `<p><strong>Banco (Febraban):</strong> ${analise.identificacao_banco.banco_febraban || 'Não identificado'}</p>`
+                        if (analise.identificacao_banco.discrepancia_banco) {
+                            html += `<p><strong>Discrepância:</strong> <span style="color:red">Discrepância encontrada!</span></p>`
+                          }
+                           if(analise.identificacao_banco.alerta_banco){
+                            html += `<p><strong>Alerta Banco:</strong> <span style="color:red">${analise.identificacao_banco.alerta_banco}</span></p>`
+                         }
+
+
+                        html += `<h3>Verificação do Valor do Boleto</h3>`
+                        html += `<p><strong>Valor Exibido:</strong> ${analise.verificacao_valor.valor_exibido || 'Não identificado'}</p>`
+                        html += `<p><strong>Valor da Linha Digitável:</strong> ${analise.verificacao_valor.valor_digitavel || 'Não identificado'}</p>`
+                        if (analise.verificacao_valor.discrepancia_valor) {
+                            html += `<p><strong>Discrepância:</strong>  <span style="color:red">Discrepância encontrada!</span></p>`
+                         }
+                           if(analise.verificacao_valor.alerta_valor){
+                            html += `<p><strong>Alerta Valor:</strong> <span style="color:red">${analise.verificacao_valor.alerta_valor}</span></p>`
+                         }
+                     
+                       html += `<h3>Consistência Geral</h3>`
+                        html += `<p><strong>Resultado:</strong> ${analise.consistencia_geral || 'Não Verificado'}</p>`
+
+                        html += `<h3>Informações Adicionais</h3>`
+                        html += `<p><strong>Local de Pagamento:</strong> ${analise.informacoes_adicionais.local_pagamento || 'Não identificado'}</p>`
+                       if(analise.informacoes_adicionais.alerta_local_pagamento){
+                            html += `<p><strong>Alerta Local de Pagamento:</strong> <span style="color:red">${analise.informacoes_adicionais.alerta_local_pagamento}</span></p>`
+                         }
+                      
+                       html += `<h3>Dados do Beneficiário</h3>`
+                        html += `<p><strong>Nome do Beneficiário:</strong> ${analise.dados_beneficiario.nome_beneficiario || 'Não identificado'}</p>`
+                        html += `<p><strong>CNPJ/CPF:</strong> ${analise.dados_beneficiario.cnpj_cpf || 'Não identificado'}</p>`
+                        html += `<p><strong>Situação Cadastral:</strong> ${analise.dados_beneficiario.situacao_cadastral || 'Não Verificado'}</p>`
+                         html += `<p><strong>Reputação (Reclame Aqui):</strong> ${analise.dados_beneficiario.reputacao_reclamacoes || 'Não Verificado'}</p>`
+                    
+                    
+                       html += `<h3>Análise da Imagem</h3>`
+                        html += `<p><strong>Resultado:</strong> ${analise.analise_imagem || 'Não Verificado'}</p>`
+                    
+                       html += `<h3>Recomendações</h3>`
+                      html += `<p><strong>Recomendações:</strong> ${analise.recomendacoes || 'Sem recomendações'}</p>`
+                       
+                      html += `<h3>Status</h3>`
+                      html += `<p><strong>Status:</strong> ${analise.status || 'Não Verificado'}</p>`
+                    
+                    html += `<h3>Observações</h3>`
+                    html += `<p><strong>Observações:</strong> ${data.analise.observacoes || 'Nenhuma observação'}</p>`
+                    
+                     html += '</div>';
+                    responseDiv.innerHTML = html;
+
+                } else {
+                 loadingDiv.style.display = 'none';
+                   responseDiv.innerHTML = `<div class="error-container">Erro ao processar análise. Verifique o console do navegador.</div>`
+                     console.log("Resposta sem campo de analise", data)
+                }
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                 responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
+                console.error('Erro durante a requisição:', error);
+            }
+        };
+          reader.onerror = function (error) {
+            loadingDiv.style.display = 'none';
+              responseDiv.innerHTML = `<div class="error-container">Erro ao ler arquivo: ${error.message}</div>`;
+            console.log('Error: ', error);
+          };
+
+    };
 });
