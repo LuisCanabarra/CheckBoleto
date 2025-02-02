@@ -2,11 +2,12 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
 
+document.addEventListener('DOMContentLoaded', function() {
 const boletoInput = document.getElementById('fileInput');
 const analisarButton = document.querySelector('button');
 const resultadoDiv = document.getElementById('response');
 
-if(analisarButton) { // Evitar erros caso o elemento não exista
+if(analisarButton) {
 analisarButton.addEventListener('click', async () => {
     const file = boletoInput.files[0];
     if (!file) {
@@ -123,7 +124,7 @@ analisarButton.addEventListener('click', async () => {
                       reader.onerror = () => {
                       responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
                         boletoInput.disabled = false;
-                       analisarButton.disabled = false;
+                        analisarButton.disabled = false;
                    };
                      reader.readAsArrayBuffer(file);
            }
@@ -137,5 +138,6 @@ analisarButton.addEventListener('click', async () => {
              boletoInput.disabled = false;
               analisarButton.disabled = false;
         }
-});
+    });
 }
+});
