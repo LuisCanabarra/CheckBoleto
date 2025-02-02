@@ -41,7 +41,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Dados do arquivo não recebidos' });
         }
 
-        const prompt = `Analise a imagem do boleto e retorne um objeto JSON com as seguintes informações:
+        const prompt = `Analise o texto do boleto e retorne um objeto JSON com as seguintes informações:
 
         {
             "analise_boleto": {
@@ -59,18 +59,18 @@ export default async function handler(req, res) {
                     "discrepancia_valor": "[true ou false]",
                     "alerta_valor": "[Mensagem de alerta (se houver)]"
                 },
-                "consistencia_geral": "[Resultado]",
+                 "consistencia_geral": "[Resultado]",
                 "informacoes_adicionais": {
                    "local_pagamento": "[Local de Pagamento]",
                    "alerta_local_pagamento": "[Alerta Local de Pagamento (se houver)]"
-                },
+                 },
                 "dados_beneficiario": {
                     "nome_beneficiario": "[Nome do Beneficiário]",
                     "cnpj_cpf": "[CNPJ/CPF]",
                     "situacao_cadastral": "[Situação Cadastral]",
-                    "reputacao_reclamacoes": "[Reputação (Reclame Aqui)]"
+                     "reputacao_reclamacoes": "[Reputação (Reclame Aqui)]"
                 },
-                "analise_imagem": "[Análise da Imagem]",
+               "analise_imagem": "[Verifique se o texto contém sinais de manipulação ou erros de digitação e se está no padrão de um boleto]",
                 "recomendacoes": "[Recomendações]",
                 "status": "[ok, alerta, perigo]"
             },
