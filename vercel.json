@@ -1,6 +1,16 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+  "functions": {
+    "api/check-boleto.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/check-boleto",
+      "methods": ["POST"],
+      "dest": "/api/check-boleto.js"
+    }
   ]
 }
