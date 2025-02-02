@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
 
 const boletoInput = document.getElementById('fileInput');
-const analisarButton = document.querySelector('button');
+const analisarButton = document.querySelector('button'); // Pega o botão pelo seletor CSS
 const resultadoDiv = document.getElementById('response');
 
 analisarButton.addEventListener('click', async () => {
@@ -37,7 +37,6 @@ analisarButton.addEventListener('click', async () => {
 
                     const formData = new FormData();
                     formData.append('boleto', new Blob([text],{type:"text/plain"}));
-                
 
                     const response = await fetch("/api/check-boleto", {
                       method: "POST",
@@ -50,10 +49,10 @@ analisarButton.addEventListener('click', async () => {
                     }
 
                     const data = await response.json();
-                    resultadoDiv.innerHTML = `
-                    <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-                        <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
-                     </div>
+                     resultadoDiv.innerHTML = `
+                      <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                            <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
+                       </div>
                     `;
 
 
@@ -117,7 +116,7 @@ analisarButton.addEventListener('click', async () => {
                         } finally {
                              // Reabilitar input e botão após o processamento
                             boletoInput.disabled = false;
-                             analisarButton.disabled = false;
+                           analisarButton.disabled = false;
                         }
                     };
                       reader.onerror = () => {
