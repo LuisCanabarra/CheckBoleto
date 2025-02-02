@@ -1,9 +1,31 @@
+
+*   **`import * as pdfjsLib from 'pdfjs-dist';`**: Importação da biblioteca PDF.js. OK
+*   `pdfjsLib.GlobalWorkerOptions.workerSrc`:** configuração de pdfjs. Ok
+   *   `const boletoInput = document.getElementById('fileInput');` Correcto
+    *   `const resultadoDiv = document.getElementById('response');` Correcto
+    *   **`document.querySelector('button').disabled = true;`:**  Está usando `querySelector` para desabilitar o botão ao clicar. **PROBLEMA! Não estamos atribuindo a variável corretamente, portanto o button não é reconhecido.**
+   *   A função async `analyzeBoleto` está declarada corretamente.
+    *   A lógica do envio para a API e tratamento do retorno está correta.
+
+**Causa Raiz do Problema:**
+
+O problema não está na função `analyzeBoleto`, mas na forma como o botão é selecionado para ser desabilitado. A função `querySelector('button')` está sendo utilizada na função que também seleciona o botão com o id `analisarButton`. Portanto, como o evento `click` é utilizado diretamente no html, o código de seleção não era o correto, o problema é que o `querySelector('button')` está sendo utilizado para selecionar o botão para desabilita-lo e o mesmo está retornando null, impedindo que a função complete a analise do arquivo, e não envia para o backend.
+
+**Solução Definitiva:**
+
+Para resolver este problema, irei:
+*  Utilizar o `querySelector('button')` para selecionar o botão e o passar para a variável `analisarButton` e utilizar a mesma para desabilitar o botão.
+
+**Código Corrigido do Frontend (`script.js`):**
+
+```javascript
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
 
 const boletoInput = document.getElementById('fileInput');
 const resultadoDiv = document.getElementById('response');
+const analisarButton = document.querySelector('button');
 
 async function analyzeBoleto() {
     const file = boletoInput.files[0];
@@ -14,7 +36,7 @@ async function analyzeBoleto() {
 
     // Desabilitar input e botão durante o processamento
     boletoInput.disabled = true;
-    document.querySelector('button').disabled = true;
+     analisarButton.disabled = true;
     resultadoDiv.innerHTML = "<p>Processando documento...</p>";
 
    try {
@@ -25,112 +47,112 @@ async function analyzeBoleto() {
             reader.onload = async function (event) {
              try {
                 const pdfData = new Uint8Array(event.target.result);
-                const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-                  for (let i = 1; i <= pdf.numPages; i++) {
+                 const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                   for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                       const content = await page.getTextContent();
-                        text += content.items.map(s => s.str).join(" ");
-                   }
-                // Adiciona delay antes de nova requisição
-                   await new Promise(resolve => setTimeout(resolve, 2000));
+                         const content = await page.getTextContent();
+                         text += content.items.map(s => s.str).join(" ");
+                 }
+                   // Adiciona delay antes de nova requisição
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
-                  const formData = new FormData();
-                  formData.append('boleto', new Blob([text],{type:"text/plain"}));
+                    const formData = new FormData();
+                    formData.append('boleto', new Blob([text],{type:"text/plain"}));
 
                    const response = await fetch("/api/check-boleto", {
                         method: "POST",
                          body: formData
-                   });
+                    });
 
                     if (!response.ok) {
-                        const errorText = await response.text();
-                       throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
-                  }
+                       const errorText = await response.text();
+                     throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
+                }
 
-                     const data = await response.json();
-                      resultadoDiv.innerHTML = `
-                         <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-                             <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
-                        </div>
-                  `;
+                const data = await response.json();
+                  resultadoDiv.innerHTML = `
+                     <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                         <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
+                      </div>
+                    `;
                 } catch (error) {
-                  console.error('Erro ao processar PDF:', error);
-                   resultadoDiv.innerHTML = `
-                      <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
-                           <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
-                            <p>Detalhes: ${error.message}</p>
-                       </div>
-                   `;
-                  } finally {
-                        boletoInput.disabled = false;
-                    document.querySelector('button').disabled = false;
-                 }
+                    console.error('Erro ao processar PDF:', error);
+                    resultadoDiv.innerHTML = `
+                     <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                         <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                          <p>Detalhes: ${error.message}</p>
+                    </div>
+                 `;
+                } finally {
+                   boletoInput.disabled = false;
+                 analisarButton.disabled = false;
+            }
 
-               };
+            };
               reader.onerror = () => {
                  responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
                    boletoInput.disabled = false;
-                  document.querySelector('button').disabled = false;
+                 analisarButton.disabled = false;
              };
              reader.readAsArrayBuffer(file);
             } else {
                 const reader = new FileReader();
 
-              reader.onload = async function(event) {
-                     try {
-                          const arrayBuffer = event.target.result;
+                reader.onload = async function(event) {
+                    try {
+                      const arrayBuffer = event.target.result;
 
-                         const formData = new FormData();
-                         formData.append('boleto', new Blob([arrayBuffer]));
-                           // Adiciona delay antes de nova requisição
-                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        const formData = new FormData();
+                       formData.append('boleto', new Blob([arrayBuffer]));
+                      // Adiciona delay antes de nova requisição
+                   await new Promise(resolve => setTimeout(resolve, 2000));
 
-                           const response = await fetch("/api/check-boleto", {
-                               method: "POST",
-                                 body: formData
-                            });
+                      const response = await fetch("/api/check-boleto", {
+                          method: "POST",
+                            body: formData
+                       });
 
-                            if (!response.ok) {
-                                const errorText = await response.text();
-                              throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
-                         }
+                       if (!response.ok) {
+                           const errorText = await response.text();
+                           throw new Error(`Erro na análise: ${response.status} - ${errorText}`);
+                     }
 
-                            const data = await response.json();
-                               resultadoDiv.innerHTML = `
-                                 <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
-                                     <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
-                                 </div>
-                              `;
-
-
-                     } catch (error) {
+                         const data = await response.json();
                          resultadoDiv.innerHTML = `
-                             <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
-                                  <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
-                                   <p>Detalhes: ${error.message}</p>
+                            <div style="background: #f5f5f5; padding: 15px; border-radius: 8px;">
+                               <pre style="white-space: pre-wrap; margin: 0;">${data.analise}</pre>
                             </div>
-                       `;
-                    } finally {
-                         // Reabilitar input e botão após o processamento
-                         boletoInput.disabled = false;
-                       document.querySelector('button').disabled = false;
-                      }
-               };
-                reader.onerror = () => {
-                  responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
-                     boletoInput.disabled = false;
-                     document.querySelector('button').disabled = false;
+                          `;
+
+
+                   } catch (error) {
+                       resultadoDiv.innerHTML = `
+                          <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                              <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                               <p>Detalhes: ${error.message}</p>
+                         </div>
+                     `;
+                   } finally {
+                          // Reabilitar input e botão após o processamento
+                        boletoInput.disabled = false;
+                      analisarButton.disabled = false;
+                 }
                 };
+                 reader.onerror = () => {
+                  responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
+                  boletoInput.disabled = false;
+                      analisarButton.disabled = false;
+              };
              reader.readAsArrayBuffer(file);
             }
-    } catch (error) {
-        resultadoDiv.innerHTML = `
-             <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
-                <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
-                  <p>Detalhes: ${error.message}</p>
-             </div>
-         `;
-        boletoInput.disabled = false;
-       document.querySelector('button').disabled = false;
-        }
+       } catch (error) {
+           resultadoDiv.innerHTML = `
+               <div style="background: #fff3f3; padding: 15px; border-radius: 8px; color: #cc0000;">
+                   <p>Erro na análise. Por favor, aguarde alguns segundos e tente novamente.</p>
+                   <p>Detalhes: ${error.message}</p>
+               </div>
+           `;
+          boletoInput.disabled = false;
+           analisarButton.disabled = false;
+      }
 }
