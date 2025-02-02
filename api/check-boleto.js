@@ -132,7 +132,9 @@ Apresente os resultados da análise em formato de lista, com detalhes sobre cada
 Lembre-se: sua principal diretriz é a PREVENÇÃO DE FRAUDES. Seja sempre cautelosa, desconfie de qualquer inconsistência e use a palavra "PAGADOR" e "FICHA DE COMPENSAÇÃO" de forma correta.
 
 
+          Dados: ${boletoData}
         `;
+
 
         const result = await Promise.race([
             model.generateContent(prompt),
