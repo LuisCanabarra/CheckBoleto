@@ -26,38 +26,39 @@ document.addEventListener('DOMContentLoaded', function() {
           pdfContainer.innerHTML = "" // Limpa o pdf anterior
           pdfContainer.style.display = 'block'
 
-
          const reader = new FileReader();
         reader.readAsDataURL(file);
 
-        reader.onload = async function() {
+         reader.onload = async function() {
               loadingDiv.style.display = 'none';
             try{
                const base64PDF = reader.result;
-                   const iframe = document.createElement('iframe');
-                  iframe.src = base64PDF;
-                  iframe.width = "100%";
-                  iframe.height = "600px";
 
-                pdfContainer.appendChild(iframe)
+
+                  const embed = document.createElement('embed');
+                   embed.src = base64PDF;
+                   embed.type = 'application/pdf';
+                  embed.width = "100%";
+                  embed.height = "600px";
+
+                pdfContainer.appendChild(embed)
+
 
             } catch (error) {
                 loadingDiv.style.display = 'none';
                  responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
                 console.error('Erro durante a requisição:', error);
              }
-
-            textoManualDiv.style.display = 'block'
+             textoManualDiv.style.display = 'block'
         };
-          reader.onerror = function (error) {
-             loadingDiv.style.display = 'none';
+         reader.onerror = function (error) {
+            loadingDiv.style.display = 'none';
              responseDiv.innerHTML = `<div class="error-container">Erro ao ler arquivo: ${error.message}</div>`;
             console.log('Error: ', error);
           };
 
-
     };
-       window.analyzeText = async function() {
+     window.analyzeText = async function() {
            const textoBoleto = textoBoletoArea.value
             if(!textoBoleto) {
                 alert("Por favor, cole o texto do boleto no campo")
@@ -83,12 +84,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const data = await response.json();
                    if (data.analise) {
-                     loadingDiv.style.display = 'none';
+                    loadingDiv.style.display = 'none';
                     // Exemplo 1: Exibir toda a análise como JSON stringificado
                     // responseDiv.innerHTML = `<div class="response-container"><pre>${JSON.stringify(data.analise, null, 2)}</pre></div>`;
-                   // Exemplo 2: Exibir propriedades específicas
+                     // Exemplo 2: Exibir propriedades específicas
                       const analise = data.analise.analise_boleto;
-                    let html = '<div class="response-container">';
+                     let html = '<div class="response-container">';
                       html += `<h2>Análise do Boleto</h2>`;
 
                         html += `<h3>Identificação do Banco Emissor</h3>`
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         html += `<h3>Verificação do Valor do Boleto</h3>`
                         html += `<p><strong>Valor Exibido:</strong> ${analise.verificacao_valor.valor_exibido || 'Não identificado'}</p>`
                         html += `<p><strong>Valor da Linha Digitável:</strong> ${analise.verificacao_valor.valor_digitavel || 'Não identificado'}</p>`
-                          if (analise.verificacao_valor.discrepancia_valor) {
+                         if (analise.verificacao_valor.discrepancia_valor) {
                             html += `<p><strong>Discrepância:</strong>  <span style="color:red">Discrepância encontrada!</span></p>`
                          }
                            if(analise.verificacao_valor.alerta_valor){
@@ -143,15 +144,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<p><strong>Observações:</strong> ${data.analise.observacoes || 'Nenhuma observação'}</p>`
                     html += '</div>';
                      responseDiv.innerHTML = html;
-                 } else {
+
+                 }  else {
                       loadingDiv.style.display = 'none';
                       responseDiv.innerHTML = `<div class="error-container">Erro ao processar análise. Verifique o console do navegador.</div>`;
                       console.log("Resposta sem campo de analise", data)
-                 }
+                    }
             } catch (error) {
-                loadingDiv.style.display = 'none';
-                responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
-               console.error('Erro durante a requisição:', error);
-           }
+                  loadingDiv.style.display = 'none';
+                   responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
+                 console.error('Erro durante a requisição:', error);
+             }
        };
 });
