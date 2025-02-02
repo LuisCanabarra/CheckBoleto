@@ -23,6 +23,9 @@
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
+              white-space: pre-wrap;
+              font-family: monospace;
+             word-break: break-word;
         }
         .error-container {
             margin-top: 20px;
@@ -31,19 +34,33 @@
             border-radius: 4px;
             color: #ff0000;
         }
+         .pdf-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+           overflow-x: auto;
+
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Verificação de Boletos</h1>
         <div class="button-container">
-            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
+            <input type="file" id="fileInput" accept=".pdf">
             <button id="verifyButton" onclick="analyzeBoleto()" disabled>Verificar</button>
         </div>
-        <div id="loading" class="loading">
+         <div class="pdf-container" id="pdfContainer" style="display: none;"></div>
+          <div id="loading" class="loading">
             <p>Processando documento...</p>
         </div>
         <div id="response"></div>
+        <div id="textoManual" style="display: none;">
+           <h2>Análise Manual (Copie e cole o texto do boleto):</h2>
+            <textarea id="textoBoleto" rows="10" cols="80"></textarea>
+            <button onclick="analyzeText()">Analisar Texto</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
