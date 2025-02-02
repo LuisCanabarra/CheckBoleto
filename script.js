@@ -1,6 +1,7 @@
 // script.js
 async function analyzeBoleto() {
     const fileInput = document.getElementById("fileInput");
+    const verifyButton = document.getElementById("verifyButton");
     const responseDiv = document.getElementById("response");
     const loadingDiv = document.getElementById("loading");
     
@@ -24,15 +25,15 @@ async function analyzeBoleto() {
         return;
     }
     
-    // Desabilitar input e mostrar loading
-    fileInput.disabled = true;
-    loadingDiv.style.display = "block";
-    responseDiv.innerHTML = "";
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
     try {
+        // Desabilitar apenas o botão de verificar durante o processamento
+        verifyButton.disabled = true;
+        loadingDiv.style.display = "block";
+        responseDiv.innerHTML = "";
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
         const response = await fetch("/api/check-boleto", {
             method: "POST",
             body: formData
@@ -59,7 +60,14 @@ async function analyzeBoleto() {
             </div>
         `;
     } finally {
-        fileInput.disabled = false;
+        // Reabilitar o botão de verificar após o processamento
+        verifyButton.disabled = false;
         loadingDiv.style.display = "none";
     }
 }
+
+// Adicionar evento para atualizar estado do botão quando um arquivo é selecionado
+document.getElementById("fileInput").addEventListener("change", function() {
+    const verifyButton = document.getElementById("verifyButton");
+    verifyButton.disabled = !this.files.length;
+});
