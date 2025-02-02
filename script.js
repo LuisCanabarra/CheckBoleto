@@ -3,7 +3,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
 
 const boletoInput = document.getElementById('fileInput');
-const analisarButton = document.querySelector('button'); // Pega o botão pelo seletor CSS
+const analisarButton = document.querySelector('button');
 const resultadoDiv = document.getElementById('response');
 
 analisarButton.addEventListener('click', async () => {
