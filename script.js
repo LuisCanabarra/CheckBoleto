@@ -1,24 +1,4 @@
 
-*   **`import * as pdfjsLib from 'pdfjs-dist';`**: Importação da biblioteca PDF.js. OK
-*   `pdfjsLib.GlobalWorkerOptions.workerSrc`:** configuração de pdfjs. Ok
-   *   `const boletoInput = document.getElementById('fileInput');` Correcto
-    *   `const resultadoDiv = document.getElementById('response');` Correcto
-    *   **`document.querySelector('button').disabled = true;`:**  Está usando `querySelector` para desabilitar o botão ao clicar. **PROBLEMA! Não estamos atribuindo a variável corretamente, portanto o button não é reconhecido.**
-   *   A função async `analyzeBoleto` está declarada corretamente.
-    *   A lógica do envio para a API e tratamento do retorno está correta.
-
-**Causa Raiz do Problema:**
-
-O problema não está na função `analyzeBoleto`, mas na forma como o botão é selecionado para ser desabilitado. A função `querySelector('button')` está sendo utilizada na função que também seleciona o botão com o id `analisarButton`. Portanto, como o evento `click` é utilizado diretamente no html, o código de seleção não era o correto, o problema é que o `querySelector('button')` está sendo utilizado para selecionar o botão para desabilita-lo e o mesmo está retornando null, impedindo que a função complete a analise do arquivo, e não envia para o backend.
-
-**Solução Definitiva:**
-
-Para resolver este problema, irei:
-*  Utilizar o `querySelector('button')` para selecionar o botão e o passar para a variável `analisarButton` e utilizar a mesma para desabilitar o botão.
-
-**Código Corrigido do Frontend (`script.js`):**
-
-```javascript
 import * as pdfjsLib from 'pdfjs-dist';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
