@@ -26,17 +26,26 @@ async function analyzeBoleto() {
     }
     
     try {
-        // Desabilitar apenas o botão de verificar durante o processamento
         verifyButton.disabled = true;
         loadingDiv.style.display = "block";
         responseDiv.innerHTML = "";
         
-        const formData = new FormData();
-        formData.append('file', file);
+        // Converter arquivo para base64
+        const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+            reader.readAsDataURL(file);
+        });
         
         const response = await fetch("/api/check-boleto", {
             method: "POST",
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fileData: base64Data
+            })
         });
         
         if (!response.ok) {
@@ -60,7 +69,6 @@ async function analyzeBoleto() {
             </div>
         `;
     } finally {
-        // Reabilitar o botão de verificar após o processamento
         verifyButton.disabled = false;
         loadingDiv.style.display = "none";
     }
