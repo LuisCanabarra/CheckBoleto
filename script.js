@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                       boletoInput.disabled = false;
                          analisarButton.disabled = false;
                   };
-                     reader.readAsArrayBuffer(file);
+                    reader.readAsArrayBuffer(file);
                  } else {
                        const reader = new FileReader();
 
