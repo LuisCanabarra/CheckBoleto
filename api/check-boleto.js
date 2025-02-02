@@ -77,7 +77,7 @@ export default async function handler(req, res) {
             "observacoes": "[Observações]"
         }
 
-        * Retorne **apenas** o objeto JSON, sem texto ou caracteres adicionais.
+        * Retorne **apenas o objeto JSON**, sem nenhum caractere adicional (como \`\`\`json ou texto).
         * Use "null" para dados ausentes.
         * Use "" para strings vazias.
         * Use "true" ou "false" para booleanos.
@@ -105,9 +105,12 @@ export default async function handler(req, res) {
         }
 
         const response = await result.response;
-        const texto = response.text();
+        let texto = response.text();
 
-        try {
+
+         // Remover delimitadores de código e espaços em branco
+         texto = texto.replace(/^```(json)?\s*|```\s*$/g, '');
+         try {
             const analiseJSON = JSON.parse(texto);
                 res.status(200).json({
                     analise: analiseJSON,
@@ -120,6 +123,7 @@ export default async function handler(req, res) {
                     raw: texto,
                   });
                }
+
     } catch (error) {
         console.error('Erro detalhado:', error);
 
