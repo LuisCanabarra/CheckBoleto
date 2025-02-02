@@ -1,6 +1,13 @@
 // check-boleto.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Buffer } from 'node:buffer';
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
 
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 3000;
@@ -12,18 +19,6 @@ const model = genAI.getGenerativeModel({
         maxOutputTokens: 1024
     }
 });
-
-// Função para converter arquivo para base64
-async function fileToBase64(file) {
-    try {
-        const buffer = await file.arrayBuffer();
-        const base64 = Buffer.from(buffer).toString('base64');
-        const mimeType = file.type;
-        return `data:${mimeType};base64,${base64}`;
-    } catch (error) {
-        throw new Error('Erro ao converter arquivo: ' + error.message);
-    }
-}
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -42,19 +37,15 @@ export default async function handler(req, res) {
         
         lastRequestTime = Date.now();
 
-        // Processar o arquivo recebido
-        const formData = await req.formData();
-        const file = formData.get('file');
+        // Receber o base64 diretamente do corpo da requisição
+        const { fileData } = req.body;
         
-        if (!file) {
-            return res.status(400).json({ error: 'Arquivo não recebido' });
+        if (!fileData) {
+            return res.status(400).json({ error: 'Dados do arquivo não recebidos' });
         }
 
-        // Converter arquivo para base64
-        const base64Data = await fileToBase64(file);
-
         const prompt = `Você é uma especialista em fraudes bancárias, altamente experiente na identificação de boletos falsificados. 
-       Instruções:
+Instruções:
 
 Receba a imagem do boleto.
 
@@ -136,10 +127,9 @@ Saída:
 
 Apresente os resultados da análise em formato de lista, com detalhes sobre cada item verificado. Seja clara, objetiva e priorize a segurança do usuário.
 
-Lembre-se: sua principal diretriz é a PREVENÇÃO DE FRAUDES. Seja sempre cautelosa, desconfie de qualquer inconsistência e use a palavra "PAGADOR" e "FICHA DE COMPENSAÇÃO" de forma correta."
- 
+Lembre-se: sua principal diretriz é a PREVENÇÃO DE FRAUDES. Seja sempre cautelosa, desconfie de qualquer inconsistência e use a palavra "PAGADOR" e "FICHA DE COMPENSAÇÃO" de forma correta.
 
-Dados para análise: ${base64Data}`;
+Dados para análise: ${fileData}`;
 
         const result = await Promise.race([
             model.generateContent({
@@ -168,14 +158,9 @@ Dados para análise: ${base64Data}`;
     } catch (error) {
         console.error('Erro detalhado:', error);
         
-        // Mensagem de erro mais específica
-        const errorMessage = error.message || 'Erro desconhecido';
-        const statusCode = error.status || 500;
-        
-        res.status(statusCode).json({
+        res.status(500).json({
             error: 'Erro ao processar documento',
-            message: errorMessage,
-            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            message: error.message
         });
     }
 }
