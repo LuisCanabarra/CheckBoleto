@@ -6,6 +6,7 @@ const boletoInput = document.getElementById('fileInput');
 const analisarButton = document.querySelector('button');
 const resultadoDiv = document.getElementById('response');
 
+if(analisarButton) { // Evitar erros caso o elemento não exista
 analisarButton.addEventListener('click', async () => {
     const file = boletoInput.files[0];
     if (!file) {
@@ -122,7 +123,7 @@ analisarButton.addEventListener('click', async () => {
                       reader.onerror = () => {
                       responseDiv.innerHTML = "<p>Erro ao ler arquivo. Tente novamente.</p>";
                         boletoInput.disabled = false;
-                        analisarButton.disabled = false;
+                       analisarButton.disabled = false;
                    };
                      reader.readAsArrayBuffer(file);
            }
@@ -137,3 +138,4 @@ analisarButton.addEventListener('click', async () => {
               analisarButton.disabled = false;
         }
 });
+}
