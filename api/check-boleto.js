@@ -51,8 +51,6 @@ export default async function handler(req, res) {
 
 Instruções:
 
-Receba a imagem do boleto.
-
 Execute a análise na ORDEM ESPECÍFICA:
 
 Identificação do Banco Emissor (PRIORIDADE ABSOLUTA):
