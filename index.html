@@ -4,15 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verificação de Boletos</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button-container {
+            margin: 20px 0;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .response-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ff0000;
+            border-radius: 4px;
+            color: #ff0000;
+        }
+    </style>
 </head>
 <body>
-    <h1>Verificação de Boletos</h1>
-    <input type="file" id="fileInput" accept=".txt,.jpg,.jpeg,.png,.pdf">
-    <button onclick="analyzeBoleto()">Verificar</button>
-    <div id="response"></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <div class="container">
+        <h1>Verificação de Boletos</h1>
+        <div class="button-container">
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
+            <button id="verifyButton" onclick="analyzeBoleto()" disabled>Verificar</button>
+        </div>
+        <div id="loading" class="loading">
+            <p>Processando documento...</p>
+        </div>
+        <div id="response"></div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
