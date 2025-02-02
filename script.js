@@ -3,16 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const verifyButton = document.getElementById('verifyButton');
     const loadingDiv = document.getElementById('loading');
     const responseDiv = document.getElementById('response');
-     const pdfContainer = document.getElementById('pdfContainer')
-    const textoManualDiv = document.getElementById('textoManual')
-    const textoBoletoArea = document.getElementById('textoBoleto')
+    const pdfContainer = document.getElementById('pdfContainer');
+    const textoManualDiv = document.getElementById('textoManual');
+    const textoBoletoArea = document.getElementById('textoBoleto');
 
 
     fileInput.addEventListener('change', function() {
         verifyButton.disabled = !fileInput.files.length;
     });
 
-     window.analyzeBoleto = async function() {
+   window.analyzeBoleto = async function() {
         const file = fileInput.files[0];
 
         if (!file) {
@@ -20,32 +20,44 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-         loadingDiv.style.display = 'block';
+        loadingDiv.style.display = 'block';
         responseDiv.innerHTML = ''; // Limpa a resposta anterior
-        textoManualDiv.style.display = 'none'
-          pdfContainer.innerHTML = "" // Limpa o pdf anterior
-          pdfContainer.style.display = 'block'
+        textoManualDiv.style.display = 'none';
+        pdfContainer.innerHTML = '';
+         pdfContainer.style.display = 'block';
 
-         const reader = new FileReader();
+
+        const reader = new FileReader();
         reader.readAsDataURL(file);
 
-         reader.onload = async function() {
-              loadingDiv.style.display = 'none';
-            try{
-               const base64PDF = reader.result;
+
+        reader.onload = async function() {
+            loadingDiv.style.display = 'none';
+           try{
+              const base64PDF = reader.result.split(',')[1];
+
+               const byteCharacters = atob(base64PDF);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(blob);
 
 
-                  const embed = document.createElement('embed');
-                   embed.src = base64PDF;
-                   embed.type = 'application/pdf';
-                  embed.width = "100%";
-                  embed.height = "600px";
+                const embed = document.createElement('embed');
+                 embed.src = pdfUrl;
+                 embed.type = 'application/pdf';
+                embed.width = "100%";
+                embed.height = "600px";
 
-                pdfContainer.appendChild(embed)
+               pdfContainer.appendChild(embed)
 
 
             } catch (error) {
-                loadingDiv.style.display = 'none';
+               loadingDiv.style.display = 'none';
                  responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
                 console.error('Erro durante a requisição:', error);
              }
@@ -56,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
              responseDiv.innerHTML = `<div class="error-container">Erro ao ler arquivo: ${error.message}</div>`;
             console.log('Error: ', error);
           };
-
     };
      window.analyzeText = async function() {
            const textoBoleto = textoBoletoArea.value
@@ -76,20 +87,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (!response.ok) {
-                    loadingDiv.style.display = 'none';
+                   loadingDiv.style.display = 'none';
                      const errorData = await response.json()
                       responseDiv.innerHTML = `<div class="error-container">Erro na requisição: ${errorData.message}</div>`;
-                    return;
+                     return;
                 }
 
                 const data = await response.json();
                    if (data.analise) {
-                    loadingDiv.style.display = 'none';
+                       loadingDiv.style.display = 'none';
                     // Exemplo 1: Exibir toda a análise como JSON stringificado
                     // responseDiv.innerHTML = `<div class="response-container"><pre>${JSON.stringify(data.analise, null, 2)}</pre></div>`;
+
                      // Exemplo 2: Exibir propriedades específicas
                       const analise = data.analise.analise_boleto;
-                     let html = '<div class="response-container">';
+                    let html = '<div class="response-container">';
                       html += `<h2>Análise do Boleto</h2>`;
 
                         html += `<h3>Identificação do Banco Emissor</h3>`
@@ -143,16 +155,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<h3>Observações</h3>`
                     html += `<p><strong>Observações:</strong> ${data.analise.observacoes || 'Nenhuma observação'}</p>`
                     html += '</div>';
-                     responseDiv.innerHTML = html;
+                    responseDiv.innerHTML = html;
 
-                 }  else {
-                      loadingDiv.style.display = 'none';
+                    }  else {
+                       loadingDiv.style.display = 'none';
                       responseDiv.innerHTML = `<div class="error-container">Erro ao processar análise. Verifique o console do navegador.</div>`;
                       console.log("Resposta sem campo de analise", data)
-                    }
+                   }
             } catch (error) {
-                  loadingDiv.style.display = 'none';
-                   responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
+               loadingDiv.style.display = 'none';
+                  responseDiv.innerHTML = `<div class="error-container">Erro ao processar requisição: ${error.message}</div>`;
                  console.error('Erro durante a requisição:', error);
              }
        };
